@@ -1,24 +1,21 @@
-local BASE_URL = "https://raw.githubusercontent.com/vmopds/VainV3/main/scripts/"
+-- bootstrap.lua
+
+_G.App = {
+	Support = {}
+}
+
+local BASE = "https://raw.githubusercontent.com/VainV4/VainScript/main/scripts/"
 
 local function Load(file)
-	local url = BASE_URL .. file
-
-	local ok, res = pcall(game.HttpGet, game, url)
-	if not ok then
-		warn("[Loader] Failed:", file)
-		return
-	end
-
-	local fn, err = loadstring(res)
+	local src = game:HttpGet(BASE .. file)
+	local fn, err = loadstring(src)
 	if not fn then
-		warn("[Loader] Compile error:", file, err)
+		warn("Compile error:", file, err)
 		return
 	end
-
-	local ran, runtimeErr = pcall(fn)
-	if not ran then
-		warn("[Loader] Runtime error:", file, runtimeErr)
-	end
+	pcall(fn)
 end
 
-Load("ui.lua")
+-- LOAD ORDER MATTERS
+Load("support.lua") -- logic FIRST
+Load("ui.lua")      -- UI AFTER
