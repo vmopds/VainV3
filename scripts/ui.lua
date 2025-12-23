@@ -351,7 +351,7 @@ local function createESP(target, category, color, enabled)
 	end
 
 	-- Metal loot extra highlight
-	if category == "metal" or category == "tree" or category == "bee" then
+	if category == "metal" then
 		-- Create a new part
 		local newPart = Instance.new("Part")
 		newPart.Size = Vector3.new(2, 2, 2) -- Adjust size as needed
@@ -527,6 +527,7 @@ CollectionService:GetInstanceAddedSignal("hidden-metal"):Connect(function(o)
 	createESP(o,"metal",Settings.METAL_ESP.COLOR,Settings.METAL_ESP.ENABLED)
 end)
 CollectionService:GetInstanceAddedSignal("bee"):Connect(function(o)
+	if o.Name == "TamedBee" then return end
 	createESP(o,"bee",Settings.BEE_ESP.COLOR,Settings.BEE_ESP.ENABLED)
 end)
 CollectionService:GetInstanceAddedSignal("tree-orb"):Connect(function(o)
