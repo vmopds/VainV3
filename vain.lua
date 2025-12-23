@@ -1,8 +1,3 @@
--- main.lua
-_G.App = {
-    Visuals = {}
-}
-
 local BASE = "https://raw.githubusercontent.com/VainV4/VainScript/main/scripts/"
 
 local function Load(file)
@@ -24,6 +19,4 @@ local function Load(file)
     end)
 end
 
--- LOAD ORDER
-Load("visuals.lua") -- Logic first
 Load("ui.lua")      -- UI second
