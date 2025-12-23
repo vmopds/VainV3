@@ -21,4 +21,4 @@ local function Load(file)
 	end
 end
 
-Load("ui.lua")
+Load("koko.lua")
