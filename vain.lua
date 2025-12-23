@@ -21,8 +21,4 @@ local function Load(file)
 	end
 end
 
--- LOAD ORDER (IMPORTANT)
 Load("ui.lua")
--- Load("combat.lua")
--- Load("support.lua")
--- Load("misc.lua")
