@@ -227,7 +227,7 @@ BeamCircle.Position = UDim2.new(0, 2, 0.5, -8)
 BeamCircle.BackgroundColor3 = Color3.fromRGB(255,255,255)
 Instance.new("UICorner", BeamCircle).CornerRadius = UDim.new(1,0)
 
--- ui.lua (Inside the BeamToggleButton.MouseButton1Click connection)
+-- ui.lua (Inside BeamToggleButton.MouseButton1Click)
 local beamEnabled = false
 BeamToggleButton.MouseButton1Click:Connect(function()
     beamEnabled = not beamEnabled
@@ -238,15 +238,12 @@ BeamToggleButton.MouseButton1Click:Connect(function()
     }):Play()
     BeamCircle:TweenPosition(beamEnabled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8), "Out", "Quad", 0.15, true)
     
-    -- Logic Trigger: Passing "Metal" as the category and "TargetPart" as the instance name
+    -- Logic Trigger
     if beamEnabled then
-        if _G.App.Visuals.EnableBeam then 
-            _G.App.Visuals.EnableBeam("Metal", "TargetPart") 
-        end
+        -- Arguments: Tag Name, Category Label, Color
+        _G.App.Visuals.EnableCategory("hidden-metal", "metal-loot", Color3.fromRGB(0, 170, 255))
     else
-        if _G.App.Visuals.DisableBeam then 
-            _G.App.Visuals.DisableBeam("Metal") 
-        end
+        _G.App.Visuals.DisableCategory("metal-loot")
     end
 end)
 
