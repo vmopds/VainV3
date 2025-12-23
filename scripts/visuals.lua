@@ -43,6 +43,7 @@ function _G.App.Visuals.EnableCategory(tagName, categoryName, color)
     -- 2. Create beams for existing items
     for _, loot in ipairs(CollectionService:GetTagged(tagName)) do
         createBeam(loot, categoryName, color)
+        print("Created beam for " + tagName)
     end
 end
 
