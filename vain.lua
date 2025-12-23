@@ -23,6 +23,6 @@ end
 
 -- LOAD ORDER (IMPORTANT)
 Load("ui.lua")
-Load("combat.lua")
-Load("support.lua")
-Load("misc.lua")
+-- Load("combat.lua")
+-- Load("support.lua")
+-- Load("misc.lua")
