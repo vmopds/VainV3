@@ -1,28 +1,23 @@
--- Visuals.lua
-local Visuals = {}
+local Visuals = _G.Vain.Visuals
+local Config = _G.Vain.Config
 
 local Players = game:GetService("Players")
 local CollectionService = game:GetService("CollectionService")
 
-function Visuals.CreateESP(target, category, color, enabled, config)
-	-- dein createESP Code
+function Visuals.CreateESP(target, category)
+	-- 👉 dein createESP Code
+	-- benutze Config.Settings & Config.ActiveObjects
 end
 
-function Visuals.ToggleCategory(category, state, config)
+function Visuals.Toggle(category, state)
 	-- dein toggleCategory Code
 end
 
-function Visuals.Refresh(config)
+function Visuals.Refresh()
 	-- dein RefreshESP Code
 end
 
-function Visuals.Init(config)
-	CollectionService:GetInstanceAddedSignal("hidden-metal"):Connect(function(o)
-		Visuals.CreateESP(o,"metal",config.Settings.METAL_ESP.COLOR,config.Settings.METAL_ESP.ENABLED,config)
-	end)
-
-	-- die restlichen Listener
-end
-
-return Visuals
-
+-- Listener
+CollectionService:GetInstanceAddedSignal("hidden-metal"):Connect(function(o)
+	Visuals.CreateESP(o, "metal")
+end)
