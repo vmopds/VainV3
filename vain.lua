@@ -17,10 +17,16 @@ local function Load(file)
 	end
 
 	local fn, err = loadstring(src)
-	if not fn then
-		warn("Compile error:", file, err)
-		return
-	end
+if not fn then
+    warn("===== COMPILE ERROR =====")
+    warn("FILE:", file)
+    warn(err)
+    warn("===== SOURCE START =====")
+    warn(src)
+    warn("===== SOURCE END =====")
+    return
+end
+
 
 	task.spawn(function()
 		local ok, runErr = pcall(fn)
