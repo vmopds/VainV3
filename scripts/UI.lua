@@ -267,6 +267,7 @@ UIS.InputBegan:Connect(function(input, gp)
     if gp then return end
 
     if input.KeyCode == Enum.KeyCode.RightShift then
+        print("N word")
         visible = not visible
         MainContainer.Visible = visible
 
