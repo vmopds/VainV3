@@ -1,9 +1,10 @@
--- ui.lua (Final Improved Version)
+-- ui.lua (Fully Fixed Version)
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 
+-- Assume _G.Vain.Config.Settings exists
 local Settings = _G.Vain.Config.Settings
 
 -- Main container
@@ -13,7 +14,7 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 999
 
 local MainContainer = Instance.new("Frame", ScreenGui)
-MainContainer.Size = UDim2.new(0.7, 0, 0.7, 0)
+MainContainer.Size = UDim2.new(0.7,0,0.7,0)
 MainContainer.Position = UDim2.new(0.5,0,0.5,0)
 MainContainer.AnchorPoint = Vector2.new(0.5,0.5)
 MainContainer.BackgroundColor3 = Settings.UI_COLOR
@@ -58,7 +59,7 @@ Content.ClipsDescendants = false
 local Panels = {}
 local Buttons = {}
 
--- Create category/tab
+-- Category creator
 local function CreateCategory(name)
 	local btn = Instance.new("TextButton", Sidebar)
 	btn.Size = UDim2.new(0,140,0,35)
@@ -97,7 +98,7 @@ local function CreateCategory(name)
 	return panel
 end
 
--- Helpers: Toggle
+-- UI Helpers
 local function CreateToggle(parent,text,default,callback)
 	local frame = Instance.new("Frame", parent)
 	frame.Size = UDim2.new(1,0,0,40)
@@ -123,7 +124,7 @@ local function CreateToggle(parent,text,default,callback)
 	local dot = Instance.new("Frame", btn)
 	dot.Size = UDim2.new(0,14,0,14)
 	dot.Position = default and UDim2.new(1,-16,0.5,-7) or UDim2.new(0,2,0.5,-7)
-	dot.BackgroundColor3 = Color3.new(1,1,1)
+	dot.BackgroundColor3 = default and Color3.fromRGB(255,255,255) or Color3.fromRGB(200,200,200)
 	Instance.new("UICorner", dot).CornerRadius = UDim.new(1,0)
 
 	btn.MouseButton1Click:Connect(function()
@@ -135,7 +136,6 @@ local function CreateToggle(parent,text,default,callback)
 	end)
 end
 
--- Helpers: Slider
 local function CreateSlider(parent,text,min,max,default,callback)
 	local frame = Instance.new("Frame", parent)
 	frame.Size = UDim2.new(1,0,0,45)
@@ -173,98 +173,40 @@ local function CreateSlider(parent,text,min,max,default,callback)
 		callback(value)
 	end
 	sliderFrame.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			move(input)
-		end
+		if input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true move(input) end
 	end)
 	UIS.InputChanged:Connect(function(input)
-		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			move(input)
-		end
+		if dragging and input.UserInputType==Enum.UserInputType.MouseMovement then move(input) end
 	end)
 	UIS.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = false
-		end
+		if input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
 	end)
 end
 
--- Helpers: ColorPicker
-local function CreateColorPicker(parent,text,defaultColor,callback)
-	local frame = Instance.new("Frame", parent)
-	frame.Size = UDim2.new(1,0,0,40)
-	frame.BackgroundColor3 = Color3.fromRGB(20,20,24)
-	Instance.new("UICorner", frame).CornerRadius = UDim.new(0,6)
-
-	local label = Instance.new("TextLabel", frame)
-	label.Text = " "..text
-	label.Size = UDim2.new(1,0,1,0)
-	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.fromRGB(200,200,205)
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.Font = Enum.Font.GothamMedium
-	label.TextSize = 16
-	label.TextScaled = true
-
-	local btn = Instance.new("TextButton", frame)
-	btn.Size = UDim2.new(0,30,0,30)
-	btn.Position = UDim2.new(1,-35,0.5,-15)
-	btn.BackgroundColor3 = defaultColor
-	btn.Text = ""
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,4)
-
-	btn.MouseButton1Click:Connect(function()
-		local r,g,b = math.random(),math.random(),math.random()
-		local newColor = Color3.fromRGB(r*255,g*255,b*255)
-		btn.BackgroundColor3 = newColor
-		callback(newColor)
-	end)
-end
-
--- CREATE CATEGORIES
+-- CREATE ALL CATEGORIES
 local Combat = CreateCategory("Combat")
 local Visuals = CreateCategory("Visuals")
 local SettingsPanel = CreateCategory("Settings")
 
--- POPULATE COMBAT
-CreateToggle(Combat,"Aim Assist (Q)",Settings.AIM_ASSIST.ENABLED,function(v)
-	Settings.AIM_ASSIST.ENABLED = v
-end)
+-- POPULATE COMBAT TAB
+CreateToggle(Combat,"Aim Assist (Q)",Settings.AIM_ASSIST.ENABLED,function(v) Settings.AIM_ASSIST.ENABLED=v end)
 
--- POPULATE VISUALS
-CreateToggle(Visuals,"Metal ESP",Settings.METAL_ESP.ENABLED,function(v) Settings.METAL_ESP.ENABLED = v end)
-CreateToggle(Visuals,"Star ESP",Settings.STAR_ESP.ENABLED,function(v) Settings.STAR_ESP.ENABLED = v end)
-CreateToggle(Visuals,"Tree Orb ESP",Settings.TREE_ESP.ENABLED,function(v) Settings.TREE_ESP.ENABLED = v end)
-CreateToggle(Visuals,"Bee ESP",Settings.BEE_ESP.ENABLED,function(v) Settings.BEE_ESP.ENABLED = v end)
+-- POPULATE VISUALS TAB
+CreateToggle(Visuals,"Metal ESP",Settings.METAL_ESP.ENABLED,function(v) Settings.METAL_ESP.ENABLED=v end)
+CreateToggle(Visuals,"Star ESP",Settings.STAR_ESP.ENABLED,function(v) Settings.STAR_ESP.ENABLED=v end)
+CreateToggle(Visuals,"Tree Orb ESP",Settings.TREE_ESP.ENABLED,function(v) Settings.TREE_ESP.ENABLED=v end)
+CreateToggle(Visuals,"Bee ESP",Settings.BEE_ESP.ENABLED,function(v) Settings.BEE_ESP.ENABLED=v end)
 
--- POPULATE SETTINGS
-CreateColorPicker(SettingsPanel,"UI Color",Settings.UI_COLOR,function(c)
-	Settings.UI_COLOR = c
-	MainContainer.BackgroundColor3 = c
-end)
-CreateSlider(SettingsPanel,"Aim Smoothness",0,1,Settings.AIM_ASSIST.SMOOTHNESS,function(v)
-	Settings.AIM_ASSIST.SMOOTHNESS = v
-end)
-CreateSlider(SettingsPanel,"Aim Max Distance",10,500,Settings.AIM_ASSIST.MAX_DISTANCE,function(v)
-	Settings.AIM_ASSIST.MAX_DISTANCE = v
-end)
-CreateSlider(SettingsPanel,"Aim Max Angle",10,180,Settings.AIM_ASSIST.MAX_ANGLE,function(v)
-	Settings.AIM_ASSIST.MAX_ANGLE = v
-end)
-CreateColorPicker(SettingsPanel,"Metal ESP Color",Settings.METAL_ESP.COLOR,function(c)
-	Settings.METAL_ESP.COLOR = c
-end)
-CreateColorPicker(SettingsPanel,"Star ESP Color",Settings.STAR_ESP.COLOR,function(c)
-	Settings.STAR_ESP.COLOR = c
-end)
-CreateColorPicker(SettingsPanel,"Tree ESP Color",Settings.TREE_ESP.COLOR,function(c)
-	Settings.TREE_ESP.COLOR = c
-end)
-CreateColorPicker(SettingsPanel,"Bee ESP Color",Settings.BEE_ESP.COLOR,function(c)
-	Settings.BEE_ESP.COLOR = c
-end)
+-- POPULATE SETTINGS TAB
+CreateColorPicker(SettingsPanel,"UI Color",Settings.UI_COLOR,function(c) Settings.UI_COLOR=c MainContainer.BackgroundColor3=c end)
+CreateSlider(SettingsPanel,"Aim Smoothness",0,1,Settings.AIM_ASSIST.SMOOTHNESS,function(v) Settings.AIM_ASSIST.SMOOTHNESS=v end)
+CreateSlider(SettingsPanel,"Aim Max Distance",0,500,Settings.AIM_ASSIST.MAX_DISTANCE,function(v) Settings.AIM_ASSIST.MAX_DISTANCE=v end)
+CreateSlider(SettingsPanel,"Aim Max Angle",0,180,Settings.AIM_ASSIST.MAX_ANGLE,function(v) Settings.AIM_ASSIST.MAX_ANGLE=v end)
+CreateColorPicker(SettingsPanel,"Metal ESP Color",Settings.METAL_ESP.COLOR,function(c) Settings.METAL_ESP.COLOR=c end)
+CreateColorPicker(SettingsPanel,"Star ESP Color",Settings.STAR_ESP.COLOR,function(c) Settings.STAR_ESP.COLOR=c end)
+CreateColorPicker(SettingsPanel,"Tree ESP Color",Settings.TREE_ESP.COLOR,function(c) Settings.TREE_ESP.COLOR=c end)
+CreateColorPicker(SettingsPanel,"Bee ESP Color",Settings.BEE_ESP.COLOR,function(c) Settings.BEE_ESP.COLOR=c end)
 
 -- DEFAULT TAB
-Panels["Settings"].Visible = true
-Buttons["Settings"].BackgroundColor3 = Color3.fromRGB(0,120,255)
+Panels["Settings"].Visible=true
+Buttons["Settings"].BackgroundColor3=Color3.fromRGB(0,120,255)
