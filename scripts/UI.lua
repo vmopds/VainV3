@@ -256,16 +256,26 @@ CreateSlider(SettingsPanel,"Aim Smoothness",0,1,Settings.AIM_ASSIST.SMOOTHNESS,f
 CreateSlider(SettingsPanel,"Aim Max Distance",10,500,Settings.AIM_ASSIST.MAX_DISTANCE,function(v) Settings.AIM_ASSIST.MAX_DISTANCE=v end)
 CreateSlider(SettingsPanel,"Aim Max Angle",10,180,Settings.AIM_ASSIST.MAX_ANGLE,function(v) Settings.AIM_ASSIST.MAX_ANGLE=v end)
 
---// UI TOGGLE (RightShift)
-local UIVisible = true
+--// UI VISIBILITY TOGGLE (FIXED)
+local UIS = game:GetService("UserInputService")
+local visible = true
 
-UIS.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
+MainContainer.Visible = true
+if blur then blur.Enabled = true end
+
+UIS.InputBegan:Connect(function(input, gp)
+    if gp then return end
+
     if input.KeyCode == Enum.KeyCode.RightShift then
-        UIVisible = not UIVisible
-        ScreenGui.Enabled = UIVisible
+        visible = not visible
+        MainContainer.Visible = visible
+
+        if blur then
+            blur.Enabled = visible
+        end
     end
 end)
+
 
 -- DEFAULT TAB
 Panels["Combat"].Visible = true
