@@ -1,5 +1,5 @@
 -- visuals.lua
--- FULLY FIXED ESP SYSTEM (Metal / Tree / Bee / Star)
+-- FINAL, STABLE ESP SYSTEM
 
 local Visuals = {}
 _G.Vain.Visuals = Visuals
@@ -12,84 +12,54 @@ local CollectionService = game:GetService("CollectionService")
 
 local player = Players.LocalPlayer
 
---// ENSURE TABLES
-Config.ActiveObjects = Config.ActiveObjects or {
+--// STATE
+local Active = {
 	metal = {},
 	tree = {},
 	bee = {},
 	star = {}
 }
 
---// GET SETTINGS
-local function getSettings(category)
-	return Config.Settings[string.upper(category) .. "_ESP"]
+--// UTILS
+local function isPart(obj)
+	return obj:IsA("BasePart") or obj:IsA("MeshPart") or obj:IsA("UnionOperation")
 end
 
---// GET ROOT PART (VERY IMPORTANT)
-local function getRoot(obj)
-	if not obj then return end
-
-	if obj:IsA("BasePart") then
-		return obj
-	end
-
-	if obj:IsA("Model") then
-		return obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart", true)
-	end
-end
-
---// CLEAN ESP
-local function cleanup(category, target)
-	local data = Config.ActiveObjects[category][target]
-	if not data then return end
-
-	for _, inst in pairs(data) do
-		if typeof(inst) == "Instance" then
-			inst:Destroy()
+local function clearCategory(category)
+	for _, data in pairs(Active[category]) do
+		for _, inst in pairs(data) do
+			if typeof(inst) == "Instance" then
+				inst:Destroy()
+			end
 		end
 	end
-
-	Config.ActiveObjects[category][target] = nil
+	Active[category] = {}
 end
 
 --// CREATE ESP
-function Visuals.CreateESP(target, category)
-	if not target then return end
-	if Config.ActiveObjects[category][target] then return end
-
-	local settings = getSettings(category)
-	if not settings or not settings.ENABLED then return end
+local function createESP(target, category, color)
+	if Active[category][target] then return end
+	if not isPart(target) and not target:IsA("Model") then return end
 	if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
 
-	local root = getRoot(target)
-	if not root then return end
-
-	--// COLOR
-	local color = settings.COLOR
-	if category == "star" then
-		local n = target.Name:lower()
-		if n:find("green") then
-			color = Color3.fromRGB(80,255,80)
-		elseif n:find("yellow") then
-			color = Color3.fromRGB(255,230,50)
-		end
+	local adornee = target
+	if target:IsA("Model") then
+		adornee = target.PrimaryPart
+		if not adornee then return end
 	end
 
-	--// HIGHLIGHT
-	local highlight = Instance.new("Highlight")
-	highlight.FillColor = color
-	highlight.OutlineColor = Color3.new(1,1,1)
-	highlight.FillTransparency = 0.55
-	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	highlight.Adornee = root.Parent:IsA("Model") and root.Parent or root
-	highlight.Parent = workspace
+	-- Highlight
+	local h = Instance.new("Highlight")
+	h.Adornee = adornee
+	h.FillColor = color
+	h.OutlineColor = Color3.new(1,1,1)
+	h.FillTransparency = 0.55
+	h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	h.Parent = workspace
 
-	--// BEAM
-	local a0 = Instance.new("Attachment")
-	a0.Parent = player.Character.HumanoidRootPart
-
-	local a1 = Instance.new("Attachment")
-	a1.Parent = root
+	-- Beam
+	local a0 = Instance.new("Attachment", player.Character.HumanoidRootPart)
+	local a1 = Instance.new("Attachment", adornee)
 
 	local beam = Instance.new("Beam")
 	beam.Attachment0 = a0
@@ -100,96 +70,96 @@ function Visuals.CreateESP(target, category)
 	beam.Color = ColorSequence.new(color)
 	beam.Parent = workspace
 
-	Config.ActiveObjects[category][target] = {
-		Highlight = highlight,
+	Active[category][target] = {
+		Highlight = h,
 		Beam = beam,
 		A0 = a0,
 		A1 = a1
 	}
-	print("Created ESP for " .. category)
 end
 
---// TOGGLE CATEGORY
+--// REFRESH CATEGORY
+function Visuals.Refresh(category)
+	local settings = Config.Settings[string.upper(category) .. "_ESP"]
+	if not settings or not settings.ENABLED then return end
+
+	if category == "metal" then
+		for _, obj in ipairs(CollectionService:GetTagged("hidden-metal")) do
+			createESP(obj, "metal", settings.COLOR)
+		end
+
+	elseif category == "tree" then
+		for _, obj in ipairs(CollectionService:GetTagged("treeOrb")) do
+			createESP(obj, "tree", settings.COLOR)
+		end
+
+	elseif category == "bee" then
+		for _, obj in ipairs(CollectionService:GetTagged("bee")) do
+			if obj.Name ~= "TamedBee" then
+				createESP(obj, "bee", settings.COLOR)
+			end
+		end
+
+	elseif category == "star" then
+		for _, obj in ipairs(workspace:GetDescendants()) do
+			if obj:IsA("Model") and obj.Name:lower():find("star") then
+				local color = settings.COLOR
+				local n = obj.Name:lower()
+				if n:find("green") then color = Color3.fromRGB(80,255,80) end
+				if n:find("yellow") then color = Color3.fromRGB(255,230,50) end
+				createESP(obj, "star", color)
+			end
+		end
+	end
+end
+
+--// TOGGLE
 function Visuals.Toggle(category, state)
-	local settings = getSettings(category)
+	local settings = Config.Settings[string.upper(category) .. "_ESP"]
 	if not settings then return end
 
 	settings.ENABLED = state
 
 	if not state then
-		for target in pairs(Config.ActiveObjects[category]) do
-			cleanup(category, target)
-		end
+		clearCategory(category)
 	else
 		Visuals.Refresh(category)
 	end
-
-	if _G.Vain.Notify then
-		print("It should work")
-		_G.Vain.Notify((state and "Enabled " or "Disabled ") .. category)
-	end
 end
 
---// REFRESH EXISTING OBJECTS
-function Visuals.Refresh(category)
-	if not category or category == "metal" then
-		for _, obj in ipairs(CollectionService:GetTagged("hidden-metal")) do
-			Visuals.CreateESP(obj, "metal")
-		end
-	end
-
-	if not category or category == "tree" then
-		for _, obj in ipairs(CollectionService:GetTagged("treeOrb")) do
-			Visuals.CreateESP(obj, "tree")
-		end
-	end
-
-	if not category or category == "bee" then
-		for _, obj in ipairs(CollectionService:GetTagged("bee")) do
-			if obj.Name ~= "TamedBee" then
-				Visuals.CreateESP(obj, "bee")
-			end
-		end
-	end
-
-	if not category or category == "star" then
-		for _, obj in ipairs(workspace:GetDescendants()) do
-			if obj:IsA("Model") and obj.Name:lower():find("star") then
-				Visuals.CreateESP(obj, "star")
-			end
-		end
-	end
-end
-
---// NEW OBJECT LISTENERS
+--// NEW OBJECTS
 CollectionService:GetInstanceAddedSignal("hidden-metal"):Connect(function(o)
-	Visuals.CreateESP(o, "metal")
+	if Config.Settings.METAL_ESP.ENABLED then
+		createESP(o, "metal", Config.Settings.METAL_ESP.COLOR)
+	end
 end)
 
 CollectionService:GetInstanceAddedSignal("treeOrb"):Connect(function(o)
-	Visuals.CreateESP(o, "tree")
+	if Config.Settings.TREE_ESP.ENABLED then
+		createESP(o, "tree", Config.Settings.TREE_ESP.COLOR)
+	end
 end)
 
 CollectionService:GetInstanceAddedSignal("bee"):Connect(function(o)
-	if o.Name ~= "TamedBee" then
-		Visuals.CreateESP(o, "bee")
+	if Config.Settings.BEE_ESP.ENABLED and o.Name ~= "TamedBee" then
+		createESP(o, "bee", Config.Settings.BEE_ESP.COLOR)
 	end
 end)
 
 workspace.DescendantAdded:Connect(function(o)
-	if o:IsA("Model") and o.Name:lower():find("star") then
+	if Config.Settings.STAR_ESP.ENABLED and o:IsA("Model") and o.Name:lower():find("star") then
 		task.wait(0.1)
-		Visuals.CreateESP(o, "star")
+		createESP(o, "star", Config.Settings.STAR_ESP.COLOR)
 	end
 end)
 
---// CHARACTER RESPAWN
+--// RESPAWN
 player.CharacterAdded:Connect(function()
 	task.wait(1)
-	for cat in pairs(Config.ActiveObjects) do
-		for target in pairs(Config.ActiveObjects[cat]) do
-			cleanup(cat, target)
+	for cat in pairs(Active) do
+		if Config.Settings[string.upper(cat).."_ESP"].ENABLED then
+			clearCategory(cat)
+			Visuals.Refresh(cat)
 		end
 	end
-	Visuals.Refresh()
 end)
