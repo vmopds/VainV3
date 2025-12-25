@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local player = Players.LocalPlayer
+local PlayerGui = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 --// SETTINGS
 local Settings = _G.Vain.Config.Settings
@@ -255,6 +256,86 @@ end)
 CreateSlider(SettingsPanel,"Aim Smoothness",0,1,Settings.AIM_ASSIST.SMOOTHNESS,function(v) Settings.AIM_ASSIST.SMOOTHNESS=v end)
 CreateSlider(SettingsPanel,"Aim Max Distance",10,500,Settings.AIM_ASSIST.MAX_DISTANCE,function(v) Settings.AIM_ASSIST.MAX_DISTANCE=v end)
 CreateSlider(SettingsPanel,"Aim Max Angle",10,180,Settings.AIM_ASSIST.MAX_ANGLE,function(v) Settings.AIM_ASSIST.MAX_ANGLE=v end)
+
+--// NOTIFICATION SYSTEM
+local NotificationGui = Instance.new("ScreenGui")
+NotificationGui.Name = "VainNotifications"
+NotificationGui.ResetOnSpawn = false
+NotificationGui.DisplayOrder = 1000
+NotificationGui.Parent = PlayerGui
+
+local Holder = Instance.new("Frame")
+Holder.AnchorPoint = Vector2.new(1,1)
+Holder.Position = UDim2.new(1,-20,1,-20)
+Holder.Size = UDim2.new(0,300,1,0)
+Holder.BackgroundTransparency = 1
+Holder.Parent = NotificationGui
+
+local Layout = Instance.new("UIListLayout")
+Layout.Padding = UDim.new(0,10)
+Layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+Layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+Layout.Parent = Holder
+
+--// NOTIFY FUNCTION
+function Notify(text, duration)
+	duration = duration or 4.5
+
+	local frame = Instance.new("TextButton")
+	frame.Size = UDim2.new(1,0,0,50)
+	frame.BackgroundColor3 = Color3.fromRGB(20,20,25)
+	frame.Text = ""
+	frame.AutoButtonColor = false
+	frame.Parent = Holder
+	Instance.new("UICorner", frame).CornerRadius = UDim.new(0,8)
+
+	local stroke = Instance.new("UIStroke", frame)
+	stroke.Color = Color3.fromRGB(60,60,70)
+	stroke.Thickness = 1
+
+	local label = Instance.new("TextLabel")
+	label.Text = text
+	label.Font = Enum.Font.GothamMedium
+	label.TextSize = 14
+	label.TextWrapped = true
+	label.TextColor3 = Color3.fromRGB(220,220,225)
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.new(1,-20,1,-10)
+	label.Position = UDim2.new(0,10,0,5)
+	label.TextXAlignment = Left
+	label.TextYAlignment = Center
+	label.Parent = frame
+
+	-- slide in
+	frame.Position = UDim2.new(1,50,0,0)
+	TweenService:Create(
+		frame,
+		TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+		{Position = UDim2.new(0,0,0,0)}
+	):Play()
+
+	local dismissed = false
+	local function remove()
+		if dismissed then return end
+		dismissed = true
+
+		TweenService:Create(
+			frame,
+			TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+			{Position = UDim2.new(1,50,0,0), BackgroundTransparency = 1}
+		):Play()
+
+		task.delay(0.3, function()
+			frame:Destroy()
+		end)
+	end
+
+	frame.MouseButton1Click:Connect(remove)
+	task.delay(duration, remove)
+end
+
+
+
 
 --// UI VISIBILITY TOGGLE (FIXED)
 local UIS = game:GetService("UserInputService")
