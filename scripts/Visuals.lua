@@ -106,6 +106,7 @@ function Visuals.CreateESP(target, category)
 		A0 = a0,
 		A1 = a1
 	}
+	print("Created ESP for " .. category)
 end
 
 --// TOGGLE CATEGORY
