@@ -219,28 +219,72 @@ local function CreateUI()
     end
 
     local function LoadCategory(cat)
-        content:ClearAllChildren()
-        contentLayout.Parent = content
+    content:ClearAllChildren()
+    contentLayout.Parent = content
 
-        for _, mod in pairs(Modules[cat]) do
-            local card = Instance.new("Frame", content)
-            card.Size = UDim2.new(1,0,0,54)
-            card.BackgroundColor3 = Color3.fromRGB(26,26,26)
-            Instance.new("UICorner", card).CornerRadius = UDim.new(0,10)
+    for _, mod in pairs(Modules[cat]) do
+        local card = Instance.new("Frame", content)
+        card.Size = UDim2.new(1,0,0,54)
+        card.BackgroundColor3 = Color3.fromRGB(26,26,26)
+        Instance.new("UICorner", card).CornerRadius = UDim.new(0,10)
 
-            local title = Instance.new("TextLabel", card)
-            title.Position = UDim2.new(0,14,0,0)
-            title.Size = UDim2.new(0.5,0,1,0)
-            title.Text = mod.Name
-            title.TextColor3 = Color3.new(1,1,1)
-            title.Font = Enum.Font.GothamMedium
-            title.TextSize = 15
-            title.BackgroundTransparency = 1
-            title.TextXAlignment = Left
+        local title = Instance.new("TextLabel", card)
+        title.Position = UDim2.new(0,14,0,0)
+        title.Size = UDim2.new(0.5,0,1,0)
+        title.Text = mod.Name
+        title.TextColor3 = Color3.new(1,1,1)
+        title.Font = Enum.Font.GothamMedium
+        title.TextSize = 15
+        title.BackgroundTransparency = 1
+        title.TextXAlignment = Left
 
-            CreateToggle(card, mod, cat)
+        -- Module Toggle
+        CreateToggle(card, mod, cat)
+
+        -- Expanded Settings Frame
+        local settingsFrame = Instance.new("Frame", card)
+        settingsFrame.Position = UDim2.new(0,0,1,4)
+        settingsFrame.Size = UDim2.new(1,0,0,0)
+        settingsFrame.BackgroundTransparency = 1
+        settingsFrame.ClipsDescendants = true
+
+        -- Fill settings
+        local settingsLayout = Instance.new("UIListLayout", settingsFrame)
+        settingsLayout.Padding = UDim.new(0,4)
+
+        for key,value in pairs(mod.Settings) do
+            if type(value) == "boolean" then
+                -- Boolean Toggle
+                local frame = Instance.new("Frame", settingsFrame)
+                frame.Size = UDim2.new(1,0,0,28)
+                frame.BackgroundTransparency = 1
+                local lbl = Instance.new("TextLabel", frame)
+                lbl.Text = key
+                lbl.Size = UDim2.new(0.6,0,1,0)
+                lbl.TextColor3 = Color3.new(1,1,1)
+                lbl.TextXAlignment = Left
+                lbl.Font = Enum.Font.Gotham
+                lbl.TextSize = 13
+                lbl.BackgroundTransparency = 1
+                CreateToggle(frame, {Settings = mod.Settings, Name = key}, cat)
+            elseif type(value) == "number" then
+                -- Number Slider
+                CreateSlider(settingsFrame, key, 0, 100, mod.Settings, key)
+            end
         end
+
+        -- Expand/Collapse Logic
+        local expanded = false
+        title.MouseButton1Click:Connect(function()
+            expanded = not expanded
+            local goal = expanded and settingsLayout.AbsoluteContentSize.Y or 0
+            Tween(settingsFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.new(1,0,0,goal)
+            })
+        end)
     end
+end
+
 
     for cat in pairs(Modules) do
         local btn = Instance.new("TextButton", sidebar)
