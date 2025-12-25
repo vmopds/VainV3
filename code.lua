@@ -1,170 +1,279 @@
---[[
-    VAIN UI RECODE
-    Cleaned, Optimized, and Modularized
---]]
+-- =========================
+-- UI SETUP
+-- =========================
 
-local CollectionService = game:GetService("CollectionService")
+local Converted = {
+    ["_VainUI"] = Instance.new("ScreenGui"),
+    ["_Main"] = Instance.new("Frame"),
+    ["_ModuleList"] = Instance.new("Frame"),
+    ["_Container"] = Instance.new("Frame"),
+    ["_UIListLayout"] = Instance.new("UIListLayout"),
+    ["_Modules"] = Instance.new("Folder"),
+    ["_Visuals"] = Instance.new("Frame"),
+    ["_VisualsButton"] = Instance.new("TextButton"),
+    ["_Visuals1"] = Instance.new("Frame"),
+    ["_Main1"] = Instance.new("ScrollingFrame"),
+    ["_UIListLayout1"] = Instance.new("UIListLayout"),
+    ["_MetalESP"] = Instance.new("Frame"),
+    ["_Toggle"] = Instance.new("TextButton"),
+    ["_ToggleModuleSettings"] = Instance.new("ImageButton"),
+    ["_StarESP"] = Instance.new("Frame"),
+    ["_Toggle1"] = Instance.new("TextButton"),
+    ["_AimAssist"] = Instance.new("Frame"),
+    ["_Toggle2"] = Instance.new("TextButton"),
+    ["_Settings"] = Instance.new("Frame"),
+    ["_Header"] = Instance.new("Frame"),
+    ["_name"] = Instance.new("TextLabel")
+}
+
+-- Main GUI
+local VainUI = Converted["_VainUI"]
+VainUI.Name = "VainUI"
+VainUI.DisplayOrder = 999999999
+VainUI.ResetOnSpawn = false
+VainUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+VainUI.Parent = game:GetService("CoreGui")
+
+-- Main Frame
+local Main = Converted["_Main"]
+Main.Name = "Main"
+Main.BackgroundTransparency = 1
+Main.Size = UDim2.new(1, 0, 1, 0)
+Main.Parent = VainUI
+
+-- ModuleList & Container
+local ModuleList = Converted["_ModuleList"]
+ModuleList.Size = UDim2.new(0.085, 0, 1, 0)
+ModuleList.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+ModuleList.BorderSizePixel = 0
+ModuleList.Name = "ModuleList"
+ModuleList.Parent = Main
+
+local Container = Converted["_Container"]
+Container.Position = UDim2.new(0.0515, 0, 0.0097, 0)
+Container.Size = UDim2.new(0.8798, 0, 0.9789, 0)
+Container.BackgroundTransparency = 1
+Container.Parent = ModuleList
+
+Converted["_UIListLayout"].SortOrder = Enum.SortOrder.LayoutOrder
+Converted["_UIListLayout"].Parent = Container
+
+-- Modules folder
+local Modules = Converted["_Modules"]
+Modules.Name = "Modules"
+Modules.Parent = Main
+
+-- =========================
+-- SERVICES
+-- =========================
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local CollectionService = game:GetService("CollectionService")
 local Lighting = game:GetService("Lighting")
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 
--- // UI SETUP (Referencing your Converted Table)
-local UI = Converted -- Assuming the 'Converted' table is defined above
-local MainGUI = UI["_VainUI"]
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui") or player:FindFirstChild("PlayerGui")
 
--- // CONFIGURATION & STATE
-local Config = {
-    Colors = {
-        Enabled = Color3.fromRGB(0, 255, 100),
-        Disabled = Color3.fromRGB(20, 20, 20),
-        ESP_Metal = Color3.fromRGB(255, 0, 0),
-        ESP_Star = Color3.fromRGB(255, 255, 0)
-    },
-    AimSettings = {
-        Smoothness = 0.1,
-        FOV = 80,
-        MaxDistance = 35
-    }
+local blur = Instance.new("BlurEffect", Lighting)
+blur.Enabled = false
+
+-- =========================
+-- UI REFERENCES
+-- =========================
+local ModuleVisuals = Modules:WaitForChild("Visuals")
+local MetalESPFrame = ModuleVisuals.Main:WaitForChild("MetalESP")
+local MetalESPToggleButton = MetalESPFrame.Toggle
+local ToggleMetalESPModuleSettingsButton = MetalESPFrame.ToggleModuleSettings
+
+local StarESPFrame = ModuleVisuals.Main:WaitForChild("StarESP")
+local StarESPToggleButton = StarESPFrame.Toggle
+
+local AimAssistFrame = ModuleVisuals.Main:WaitForChild("AimAssist")
+local AimAssistToggleButton = AimAssistFrame.Toggle
+
+-- =========================
+-- SETTINGS
+-- =========================
+local Settings = {
+    METAL_ESP = {ENABLED = false, COLOR = Color3.fromRGB(255,0,0)},
+    STAR_ESP = {ENABLED = false},
+    AIM_ASSIST = {ENABLED = false},
+    keybinds = {}
 }
 
-local State = {
-    MetalESP = false,
-    StarESP = false,
-    AimAssist = false,
-    Beams = {
-        Metal = {},
-        Star = {}
-    }
-}
+local Beams = {}
 
--- // UTILITIES
-local function TweenColor(object, color)
-    TweenService:Create(object, TweenInfo.new(0.2), {BackgroundColor3 = color}):Play()
+-- =========================
+-- UTILITY FUNCTIONS
+-- =========================
+
+local function getAllPlayers()
+    return Players:GetPlayers()
 end
 
-local function GetClosestTarget()
-    local target, closestDist = nil, Config.AimSettings.MaxDistance
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
+local function getNearestPlayer()
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return nil end
+    local closestPlayer = nil
+    local closestDistance = 35
+    local minDistance = 1
+    local lookDir = player.Character.HumanoidRootPart.CFrame.LookVector
 
-    local origin = char.HumanoidRootPart.Position
-    local lookDir = char.HumanoidRootPart.CFrame.LookVector
-
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p == LocalPlayer or p.Team == LocalPlayer.Team then continue end
-        local pChar = p.Character
-        if pChar and pChar:FindFirstChild("HumanoidRootPart") and pChar.Humanoid.Health > 0 then
-            local pos = pChar.HumanoidRootPart.Position
-            local dist = (pos - origin).Magnitude
-            local dirTo = (pos - origin).Unit
-            local angle = math.deg(math.acos(lookDir:Dot(dirTo)))
-
-            if dist < closestDist and angle < Config.AimSettings.FOV then
-                closestDist = dist
-                target = pChar.HumanoidRootPart
+    for _, otherPlayer in ipairs(getAllPlayers()) do
+        if otherPlayer == player or otherPlayer.Team == player.Team then continue end
+        local char = otherPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid").Health > 0 then
+            local dist = (char.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            local angle = math.deg(math.acos(lookDir:Dot((char.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Unit)))
+            if dist < closestDistance and dist > minDistance and angle <= 80 then
+                closestDistance = dist
+                closestPlayer = otherPlayer
             end
         end
     end
-    return target
+
+    return closestPlayer
 end
 
--- // ESP CORE
-local function CreateVisualLink(target, beamType, color)
-    if not target:IsA("Model") or not target.PrimaryPart then return end
-    
-    local char = LocalPlayer.Character
-    if not char or not char.PrimaryPart then return end
+local function toggleSetting(setting)
+    Settings[setting].ENABLED = not Settings[setting].ENABLED
+end
 
-    local att0 = Instance.new("Attachment", char.PrimaryPart)
-    local att1 = Instance.new("Attachment", target.PrimaryPart)
-    
-    local beam = Instance.new("Beam")
-    beam.Attachment0 = att0
-    beam.Attachment1 = att1
-    beam.Color = ColorSequence.new(color)
-    beam.Texture = "rbxassetid://4955566540"
-    beam.Width0, beam.Width1 = 0.2, 0.2
-    beam.FaceCamera = true
-    beam.Enabled = State[beamType]
-    beam.Parent = target.PrimaryPart
-
-    -- Highlight logic
-    if not target:FindFirstChildOfClass("Highlight") then
-        local hl = Instance.new("Highlight", target)
-        hl.FillColor = color
-        hl.OutlineColor = color
-        hl.FillTransparency = 0.5
+local function toggleBeamType(beamType, visibility)
+    if Beams[beamType] then
+        for _, beam in ipairs(Beams[beamType]) do
+            beam.Enabled = visibility
+        end
     end
-
-    table.insert(State.Beams[beamType == "MetalESP" and "Metal" or "Star"], beam)
 end
 
--- // MODULE TOGGLES
-local function ToggleAim()
-    State.AimAssist = not State.AimAssist
-    TweenColor(UI["_Toggle2"], State.AimAssist and Config.Colors.Enabled or Config.Colors.Disabled)
+local function createBeam(target, highlight, beamType, color, visibility)
+    if not (target.PrimaryPart and player.Character and player.Character.PrimaryPart) then return end
+
+    local attachLoot = Instance.new("Attachment", target.PrimaryPart)
+    local attachPlayer = Instance.new("Attachment", player.Character.PrimaryPart)
+
+    local beam = Instance.new("Beam", target.PrimaryPart)
+    beam.Attachment0 = attachPlayer
+    beam.Attachment1 = attachLoot
+    beam.Texture = "http://www.roblox.com/asset/?id=4955566540"
+    beam.TextureMode = Enum.TextureMode.Static
+    beam.Width0 = 0.2
+    beam.Width1 = 0.2
+    beam.Segments = 1
+    beam.FaceCamera = true
+    beam.Enabled = visibility
+    beam.Color = color and ColorSequence.new(color) or ColorSequence.new(Color3.fromRGB(255,0,0))
+
+    Beams[beamType] = Beams[beamType] or {}
+    table.insert(Beams[beamType], beam)
+
+    if highlight and not target:FindFirstChild("highlightPart") then
+        local part = Instance.new("Part", target)
+        part.Name = "highlightPart"
+        part.Transparency = 0
+        part.Anchored = true
+        part.CanCollide = false
+        part.Position = target.PrimaryPart.Position
+
+        local hl = Instance.new("Highlight", part)
+        hl.Enabled = true
+        hl.FillTransparency = 0
+        hl.FillColor = color or Color3.fromRGB(255,0,0)
+        hl.OutlineColor = color or Color3.fromRGB(255,0,0)
+    end
 end
 
-local function ToggleMetal()
-    State.MetalESP = not State.MetalESP
-    TweenColor(UI["_Toggle"], State.MetalESP and Config.Colors.Enabled or Config.Colors.Disabled)
-    for _, b in ipairs(State.Beams.Metal) do b.Enabled = State.MetalESP end
+-- =========================
+-- TOGGLES
+-- =========================
+
+local function TweenUI(element, length, color)
+    TweenService:Create(element, TweenInfo.new(length, Enum.EasingStyle.Linear), {BackgroundColor3=color}):Play()
 end
 
-local function ToggleStar()
-    State.StarESP = not State.StarESP
-    TweenColor(UI["_Toggle1"], State.StarESP and Config.Colors.Enabled or Config.Colors.Disabled)
-    for _, b in ipairs(State.Beams.Star) do b.Enabled = State.StarESP end
+local function OnMetalESPToggleButtonClick()
+    toggleSetting("METAL_ESP")
+    toggleBeamType("metal-loot", Settings.METAL_ESP.ENABLED)
+    TweenUI(MetalESPToggleButton, 0.05, Settings.METAL_ESP.ENABLED and Color3.fromRGB(0,255,0) or Color3.fromRGB(20,20,20))
 end
 
--- // RUNTIME LOOPS
+local function OnStarESPToggleButtonClick()
+    toggleSetting("STAR_ESP")
+    toggleBeamType("star", Settings.STAR_ESP.ENABLED)
+    TweenUI(StarESPToggleButton, 0.05, Settings.STAR_ESP.ENABLED and Color3.fromRGB(0,255,0) or Color3.fromRGB(20,20,20))
+end
+
+local function OnAimAssistToggleButtonClick()
+    toggleSetting("AIM_ASSIST")
+    TweenUI(AimAssistToggleButton, 0.05, Settings.AIM_ASSIST.ENABLED and Color3.fromRGB(20,20,20) or Color3.fromRGB(0,255,0))
+end
+
+-- =========================
+-- AIM ASSIST
+-- =========================
+local smoothFactor = 0.1
 RunService.Heartbeat:Connect(function()
-    if State.AimAssist then
-        local target = GetClosestTarget()
-        if target then
-            local targetCF = CFrame.new(Camera.CFrame.Position, target.Position)
-            Camera.CFrame = Camera.CFrame:Lerp(targetCF, Config.AimSettings.Smoothness)
+    if Settings.AIM_ASSIST.ENABLED then
+        local target = getNearestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            local cam = Workspace.CurrentCamera
+            local newCFrame = CFrame.new(cam.CFrame.Position, target.Character.HumanoidRootPart.Position)
+            cam.CFrame = cam.CFrame:Lerp(newCFrame, smoothFactor)
         end
     end
 end)
 
--- // INITIALIZATION & EVENTS
-local function RefreshESP()
+-- =========================
+-- METAL ESP
+-- =========================
+CollectionService:GetInstanceAddedSignal("hidden-metal"):Connect(function(loot)
+    createBeam(loot, true, "metal-loot", Settings.METAL_ESP.COLOR, Settings.METAL_ESP.ENABLED)
+end)
+
+local function GetMetalLoot()
     for _, loot in ipairs(CollectionService:GetTagged("hidden-metal")) do
-        CreateVisualLink(loot, "MetalESP", Config.Colors.ESP_Metal)
+        task.wait(0.5)
+        createBeam(loot, true, "metal-loot", Settings.METAL_ESP.COLOR, Settings.METAL_ESP.ENABLED)
     end
 end
 
--- Input Handling
-UserInputService.InputBegan:Connect(function(input, processed)
-    if processed then return end
-    if input.KeyCode == Enum.KeyCode.RightShift then
-        MainGUI.Enabled = not MainGUI.Enabled
-        Lighting:FindFirstChildOfClass("BlurEffect").Enabled = MainGUI.Enabled
-    elseif input.KeyCode == Enum.KeyCode.Q then
-        ToggleAim()
+-- =========================
+-- STAR ESP
+-- =========================
+Workspace.ChildAdded:Connect(function(child)
+    if child:IsA("Model") and child.Name:find("Star") then
+        task.wait(0.1)
+        createBeam(child, false, "star", nil, Settings.STAR_ESP.ENABLED)
     end
 end)
 
--- UI Click Connections
-UI["_Toggle"].MouseButton1Click:Connect(ToggleMetal)
-UI["_Toggle1"].MouseButton1Click:Connect(ToggleStar)
-UI["_Toggle2"].MouseButton1Click:Connect(ToggleAim)
-
--- Settings Visibility Toggle
-UI["_ToggleModuleSettings"].MouseButton1Click:Connect(function()
-    UI["_Settings"].Visible = not UI["_Settings"].Visible
+-- =========================
+-- INPUT
+-- =========================
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        VainUI.Enabled = not VainUI.Enabled
+        blur.Enabled = VainUI.Enabled
+    elseif input.KeyCode == Enum.KeyCode.Q then
+        OnAimAssistToggleButtonClick()
+    end
 end)
 
--- Setup Character Events
-LocalPlayer.CharacterAdded:Connect(function()
+-- =========================
+-- CONNECTIONS
+-- =========================
+AimAssistToggleButton.MouseButton1Click:Connect(OnAimAssistToggleButtonClick)
+MetalESPToggleButton.MouseButton1Click:Connect(OnMetalESPToggleButtonClick)
+StarESPToggleButton.MouseButton1Click:Connect(OnStarESPToggleButtonClick)
+
+player.CharacterAdded:Connect(function()
     task.wait(1)
-    RefreshESP()
+    GetMetalLoot()
 end)
 
--- Boot
-RefreshESP()
+-- Initialize existing loot
+GetMetalLoot()
