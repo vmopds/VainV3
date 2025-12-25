@@ -234,12 +234,28 @@ CreateToggle(CombatPanel,"Aim Assist (Q)",Settings.AIM_ASSIST.ENABLED,function(v
 	Settings.AIM_ASSIST.ENABLED = v 
 end)
 
---// POPULATE VISUALS
-CreateToggle(VisualsPanel,"Metal ESP",Settings.METAL_ESP.ENABLED,function(v) Settings.METAL_ESP.ENABLED=v end)
-CreateToggle(VisualsPanel,"Star ESP",Settings.STAR_ESP.ENABLED,function(v) Settings.STAR_ESP.ENABLED=v end)
-CreateToggle(VisualsPanel,"Tree ESP",Settings.TREE_ESP.ENABLED,function(v) Settings.TREE_ESP.ENABLED=v end)
-CreateToggle(VisualsPanel,"Bee ESP",Settings.BEE_ESP.ENABLED,function(v) Settings.BEE_ESP.ENABLED=v end)
+--// POPULATE VISUALS (REPLACE THE OLD SECTION WITH THIS)
+local categories = {"Metal", "Star", "Tree", "Bee"}
 
+for _, name in ipairs(categories) do
+    local settingKey = name:upper() .. "_ESP"
+    
+    -- This creates the toggle button in the UI panel [cite: 8, 9]
+    CreateToggle(VisualsPanel, name .. " ESP", Settings[settingKey].ENABLED, function(state)
+        -- 1. Update the configuration value 
+        Settings[settingKey].ENABLED = state
+        
+        -- 2. Tell the Visuals script to actually draw or remove the ESP 
+        if _G.Vain.Visuals and _G.Vain.Visuals.Refresh then
+            _G.Vain.Visuals.Refresh(name:lower())
+        end
+        
+        -- 3. Send a notification to the user [cite: 12]
+        if _G.Vain.Notify then
+            _G.Vain.Notify((state and "Enabled " or "Disabled ") .. name)
+        end
+    end)
+end
 --// POPULATE SETTINGS
 CreateColorPicker(SettingsPanel,"UI Color",Settings.UI_COLOR,function(c)
 	Settings.UI_COLOR=c
