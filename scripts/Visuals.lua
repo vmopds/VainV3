@@ -11,13 +11,32 @@ local CollectionService = game:GetService("CollectionService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
+--// GET ROOT
+
+local function getRoot(obj)
+	if obj:IsA("BasePart") then
+		return obj
+	end
+
+	if obj:IsA("Model") then
+		return obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart", true)
+	end
+
+	-- Tagged child? climb up
+	local parent = obj.Parent
+	if parent then
+		return getRoot(parent)
+	end
+end
+
+
 --// CREATE ESP
 function Visuals.CreateESP(target, category)
 	if not target then return end
 	if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
 
-	local root =
-		target:IsA("Model")
+	local root = getRoot(target)
+	if not root then return end
 		and (target.PrimaryPart
 			or target:FindFirstChildWhichIsA("BasePart")
 			or target:FindFirstChildWhichIsA("MeshPart"))
@@ -115,46 +134,35 @@ end
 
 --// TOGGLE CATEGORY
 function Visuals.Toggle(category, state)
-	for target, data in pairs(Config.ActiveObjects[category]) do
-		if data.Highlight then
-			data.Highlight.Enabled = state
-		end
-		if data.Beam then
-			data.Beam.Enabled = state
-		end
-		if data.MetalHighlight then
-			data.MetalHighlight.Enabled = state
-		end
-		if data.Beacon then
-			data.Beacon.Transparency = state and 0.5 or 1
-		end
-		if state then
-			_G.Vain.Notify("Enabled " +  category)
-		else
-			_G.Vain.Notify("Disabled " + category)
+	for _, data in pairs(Config.ActiveObjects[category]) do
+		if data.Highlight then data.Highlight.Enabled = state end
+		if data.Beam then data.Beam.Enabled = state end
 	end
-	Visuals.Refresh()
+
+	_G.Vain.Notify((state and "Enabled " or "Disabled ") .. category)
 end
+
 
 --// REFRESH ALL
 function Visuals.Refresh()
 	for _, obj in ipairs(CollectionService:GetTagged("hidden-metal")) do
-		Visuals.CreateESP(obj,"metal")
+		Visuals.CreateESP(obj, "metal")
 	end
 	for _, obj in ipairs(CollectionService:GetTagged("treeOrb")) do
-		Visuals.CreateESP(obj,"tree")
+		Visuals.CreateESP(obj, "tree")
 	end
 	for _, obj in ipairs(CollectionService:GetTagged("bee")) do
 		if obj.Name ~= "TamedBee" then
-			Visuals.CreateESP(obj,"bee")
+			Visuals.CreateESP(obj, "bee")
 		end
 	end
-	for _, child in ipairs(workspace:GetChildren()) do
-		if child:IsA("Model") and child.Name:lower():find("star") then
-			Visuals.CreateESP(child,"star")
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		if obj:IsA("Model") and obj.Name:lower():find("star") then
+			Visuals.CreateESP(obj, "star")
 		end
 	end
 end
+
 
 --// LISTENERS
 CollectionService:GetInstanceAddedSignal("hidden-metal"):Connect(function(o)
