@@ -1,4 +1,4 @@
-_G.Vain = _G.Vain or {}
+-- _G.Vain = _G.Vain or {}
 
 -- ui.lua (Fully updated)
 --// SERVICES
