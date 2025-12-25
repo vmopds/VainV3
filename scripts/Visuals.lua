@@ -13,6 +13,8 @@ local function getRoot(obj)
 end
 
 function Visuals.CreateESP(target, category)
+	print("NEW INSTANCES DETECTED!!!")
+
 	if not target or Config.ActiveObjects[category][target] then return end
 	local settings = Config.Settings[category:upper() .. "_ESP"]
 	if not settings or not settings.ENABLED then return end
@@ -87,7 +89,6 @@ end
 for _, cat in ipairs({"metal", "bee", "tree"}) do
 	local tag = Config.Settings[cat:upper() .. "_ESP"].TAG
 	CollectionService:GetInstanceAddedSignal(tag):Connect(function(obj) Visuals.CreateESP(obj, cat) end)
-	print("NEW INSTANCES DETECTED!!!")
 end
 
 return Visuals
