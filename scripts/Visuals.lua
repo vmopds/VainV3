@@ -133,6 +133,7 @@ function Visuals.Toggle(category, state)
 		else
 			_G.Vain.Notify("Disabled " + category)
 	end
+	Visuals.Refresh()
 end
 
 --// REFRESH ALL
