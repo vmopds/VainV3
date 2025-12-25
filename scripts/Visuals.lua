@@ -125,6 +125,7 @@ function Visuals.Toggle(category, state)
 	end
 
 	if _G.Vain.Notify then
+		print("It should work")
 		_G.Vain.Notify((state and "Enabled " or "Disabled ") .. category)
 	end
 end
