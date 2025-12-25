@@ -1,1 +1,10 @@
+{
+  "Visuals": {
+    "MetalESP": "modules/Visuals/MetalESP.lua"
+  },
+  "Combat": {
+    "ESP": "modules/Combat/ESP.lua"
+  },
+  "Misc": {}
+}
 
