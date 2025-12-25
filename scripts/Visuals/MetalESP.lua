@@ -1,27 +1,19 @@
--- MetalESP.lua
--- Category: Visuals
--- This module demonstrates a dynamic module with settings
-
 local module = {}
 
--- Default settings
 module.DefaultSettings = {
     Enabled = true,
     ShowBeams = true,
-    ShowDistance = false
+    ShowDistance = true
 }
 
--- Module function (runs when loaded)
 return function(settings)
-    -- For demonstration, print every 2 seconds
-    spawn(function()
-        while true do
+    task.spawn(function()
+        while task.wait(2) do
             if settings.Enabled then
-                print("[MetalESP] Enabled")
+                print("[MetalESP]")
                 print("ShowBeams:", settings.ShowBeams)
                 print("ShowDistance:", settings.ShowDistance)
             end
-            wait(2)
         end
     end)
 end
