@@ -1,8 +1,0 @@
-{
-  "Visuals": {
-    "MetalESP": "modules/Visuals/MetalESP.lua"
-  },
-  "Combat": {
-    "AimAssist": "modules/Combat/ESP.lua"
-  }
-}
