@@ -629,6 +629,7 @@ local function CreateBeamBetween(target, color, categoryName)
 	beam.Width0, beam.Width1 = 0.4, 0.4
 	beam.Enabled = state.Master and state.Beams
 	beam.Parent = a0
+	beam.FaceCamera = true
 
 	-- Storage for management
 	if not BeamGroups[categoryName] then BeamGroups[categoryName] = {} end
@@ -785,6 +786,64 @@ CollectionService:GetInstanceAddedSignal("hidden-metal"):Connect(function(newMet
 end)
 
 --------------------------------------------------
+-- STAR ESP
+--------------------------------------------------
+
+local StarESP = Visuals:CreateToggle("Star ESP", "Shows the location of every star on the map.", function(isActive)
+	ToggleBeamGroup("Star", isActive, "Master")
+end)
+
+StarESP:CreateKeybind(Enum.KeyCode.B)
+
+StarESP:CreateSubToggle("Star Notifications", "Notifies you when new stars spawn.", true, function(val)
+	if GroupStates["Star"] then
+		GroupStates["Star"].StarNotification = val
+	end
+end)
+
+StarESP:CreateSubToggle("Highlight Stars", "Shows a glowing box around the stars.", true, function(val)
+	ToggleBeamGroup("Star", val, "Highlights")
+end)
+
+StarESP:CreateSubToggle("Show Beams", "Draws a line from your body to the stars.", true, function(val)
+	ToggleBeamGroup("Star", val, "Beams")
+end)
+
+StarESP:CreateSubToggle("Show Distance", "Displays how many studs away the star is.", true, function(val)
+	ToggleBeamGroup("Star", val, "Labels")
+end)
+
+StarESP:CreateSubSlider("Max Distance", "Hides ESP if the star is further than this distance.", 50, 2000, 500, function(val)
+	ToggleBeamGroup("Star", val, "MaxDistance")
+end)
+
+-- Initial spawn for existing stars
+for _, star in pairs(game.Workspace:GetChildren()) do
+	if star:IsA("Model") and (star.Name == "CritStar" or star.Name == "VitalityStar") then
+		local beamColor = (star.Name == "CritStar") and Color3.fromRGB(255, 200, 0) or Color3.fromRGB(0, 255, 0)
+		CreateBeamBetween(star, beamColor, "Star")
+	end
+end
+
+-- Star Spawn Listener
+game.Workspace.ChildAdded:Connect(function(newStar)
+	if newStar:IsA("Model") and (newStar.Name == "CritStar" or newStar.Name == "VitalityStar") then
+		local beamColor = (newStar.Name == "CritStar") and Color3.fromRGB(255, 200, 0) or Color3.fromRGB(0, 255, 0)
+		CreateBeamBetween(newStar, beamColor, "Star")
+		
+		local settings = GroupStates["Settings"]
+		local starState = GroupStates["Star"]
+		
+		local globalNotifs = (settings == nil) or (settings.ShowNotifications ~= false)
+		local starNotifs = (starState == nil) or (starState.StarNotifications ~= false)
+		
+		if globalNotifs and starNotifs then
+			UI:Notify("New Star", "A new star has appeared!", 4)	
+		end
+	end
+end)
+
+--------------------------------------------------
 -- BEE ESP
 --------------------------------------------------
 
@@ -835,6 +894,58 @@ CollectionService:GetInstanceAddedSignal("bee"):Connect(function(newBee)
 
 	if globalNotifs and beeNotifs then
 		UI:Notify("New Bee", "A wild bee has appeared!", 4)
+	end
+end)
+
+--------------------------------------------------
+-- TREE ESP
+--------------------------------------------------
+
+local TreeESP = Visuals:CreateToggle("Eldertree ESP", "Shows the location of every orb on the map.", function(isActive)
+	ToggleBeamGroup("Tree", isActive, "Master")
+end)
+
+TreeESP:CreateKeybind(Enum.KeyCode.B)
+
+TreeESP:CreateSubToggle("Bee Notifications", "Notifies you when new orbs spawn.", true, function(val)
+	if GroupStates["Tree"] then
+		GroupStates["Tree"].BeeNotifications = val
+	end
+end)
+
+TreeESP:CreateSubToggle("Highlight Orbs", "Shows a glowing box around the orbs.", true, function(val)
+	ToggleBeamGroup("Tree", val, "Highlights")
+end)
+
+TreeESP:CreateSubToggle("Show Beams", "Draws a line from your body to the orbs.", true, function(val)
+	ToggleBeamGroup("Tree", val, "Beams")
+end)
+
+TreeESP:CreateSubToggle("Show Distance", "Displays how many studs away the orb is.", true, function(val)
+	ToggleBeamGroup("Tree", val, "Labels")
+end)
+
+TreeESP:CreateSubSlider("Max Distance", "Hides ESP if the orb is further than this distance.", 50, 2000, 500, function(val)
+	ToggleBeamGroup("Tree", val, "MaxDistance")
+end)
+
+-- Initial spawn for existing orbs
+for _, orb in ipairs(CollectionService:GetTagged("treeOrb")) do
+	CreateBeamBetween(orb, Color3.fromRGB(0, 255, 0), "Tree")
+end
+
+-- Tree orb Spawn Listener
+CollectionService:GetInstanceAddedSignal("treeOrb"):Connect(function(newOrb)
+	CreateBeamBetween(newOrb, Color3.fromRGB(0, 250, 0), "Tree")
+
+	local settings = GroupStates["Settings"]
+	local treeState = GroupStates["Tree"]
+
+	local globalNotifs = (settings == nil) or (settings.ShowNotifications ~= false)
+	local treeNotifs = (treeState == nil) or (treeState.BeeNotifications ~= false)
+
+	if globalNotifs and treeNotifs then
+		UI:Notify("New Orb", "A new Orb has appeared!", 4)
 	end
 end)
 
@@ -1065,6 +1176,19 @@ Player.CharacterAdded:Connect(function()
 		if bee.Name ~= "TamedBee" then
 			CreateBeamBetween(bee, Color3.fromRGB(255, 200, 0), "Bee")
 		end
+	end
+	
+	-- Re-initialize Star ESP
+	for _, star in pairs(game.Workspace:GetChildren()) do
+		if star:IsA("Model") and (star.Name == "CritStar" or star.Name == "VitalityStar") then
+			local beamColor = (star.Name == "CritStar") and Color3.fromRGB(255, 200, 0) or Color3.fromRGB(0, 255, 0)
+			CreateBeamBetween(star, beamColor, "Star")
+		end
+	end
+	
+	-- Re-initialize Tree Orb ESP
+	for _, orb in ipairs(CollectionService:GetTagged("treeOrb")) do
+		CreateBeamBetween(orb, Color3.fromRGB(0, 255, 0), "Tree")
 	end
 end)
 
