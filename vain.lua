@@ -630,6 +630,7 @@ local function CreateBeamBetween(target, color, categoryName)
 	beam.Enabled = state.Master and state.Beams
 	beam.Parent = a0
 	beam.FaceCamera = true
+	beam.Texture = "http://www.roblox.com/asset/?id=97236022367376"
 
 	-- Storage for management
 	if not BeamGroups[categoryName] then BeamGroups[categoryName] = {} end
